@@ -14,6 +14,10 @@
     limitations under the License.
 */
 
+#ifndef __TBB_tbbmalloc_internal_H
+    #error tbbmalloc_internal.h must be included at this point
+#endif
+
 #ifndef __TBB_backend_H
 #define __TBB_backend_H
 
@@ -88,7 +92,7 @@ enum MemRegionType {
     MEMREG_SLAB_BLOCKS = 0,
     // The region can hold several large object blocks
     MEMREG_LARGE_BLOCKS,
-    // The region holds only one block with a reqested size
+    // The region holds only one block with a requested size
     MEMREG_ONE_BLOCK
 };
 
@@ -120,8 +124,9 @@ private:
         VALID_BLOCK_IN_BIN = 1 // valid block added to bin, not returned as result
     };
 public:
-    static const int freeBinsNum =
-        (maxBinned_HugePage-minBinnedSize)/LargeObjectCache::largeBlockCacheStep + 1;
+    // Backend bins step is the same as CacheStep for large object cache
+    static const size_t   freeBinsStep = LargeObjectCache::LargeBSProps::CacheStep;
+    static const unsigned freeBinsNum = (maxBinned_HugePage-minBinnedSize)/freeBinsStep + 1;
 
     // if previous access missed per-thread slabs pool,
     // allocate numOfSlabAllocOnMiss blocks in advance
@@ -250,7 +255,7 @@ private:
 
     // register bins related to advance regions
     AdvRegionsBins advRegBins;
-    // Storage for splitted FreeBlocks
+    // Storage for split FreeBlocks
     IndexedBins freeLargeBlockBins,
                 freeSlabAlignedBins;
 
@@ -314,7 +319,7 @@ private:
         else if (size < minBinnedSize)
             return NO_BIN;
 
-        int bin = (size - minBinnedSize)/LargeObjectCache::largeBlockCacheStep;
+        int bin = (size - minBinnedSize)/freeBinsStep;
 
         MALLOC_ASSERT(bin < HUGE_BIN, "Invalid size.");
         return bin;
@@ -372,7 +377,7 @@ private:
     static size_t binToSize(int bin) {
         MALLOC_ASSERT(bin <= HUGE_BIN, "Invalid bin.");
 
-        return bin*LargeObjectCache::largeBlockCacheStep + minBinnedSize;
+        return bin*freeBinsStep + minBinnedSize;
     }
 #endif
 };
