@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 
+add_definitions(-DTBB_SUPPRESS_DEPRECATED_MESSAGES=1)
+add_definitions(-DTBB_NO_LEGACY=1)
+add_definitions(-D__TBB_NO_IMPLICIT_LINKAGE=1)
+set(CMAKE_DEBUG_POSTFIX d)
+
 if (POLICY CMP0048)
   # cmake warns if loaded from a min-3.0-required parent dir, so silence the warning:
   cmake_policy(SET CMP0048 NEW)
